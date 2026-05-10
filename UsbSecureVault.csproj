@@ -13,6 +13,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
   <ItemGroup>
+    <Resource Include="Assets\logo.png" />
     <PackageReference Include="ModernWpfUI" Version="0.9.6" />
   </ItemGroup>
 </Project>
