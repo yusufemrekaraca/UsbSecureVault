@@ -1,8 +1,8 @@
 # USB Secure Vault
 
-Windows icin WPF tabanli USB dosya kasasi.
+Windows için WPF tabanlı USB dosya kasası.
 
-## Cikti
+## Çıktı
 
 Tek dosya exe:
 
@@ -10,24 +10,24 @@ Tek dosya exe:
 bin\Release\net8.0-windows\win-x64\publish\UsbSecureVault.exe
 ```
 
-Bu dosyayi USB kok dizinine kopyalayip calistirin. Ilk acilista `vault` klasoru ve ayar dosyalari exe'nin bulundugu yerde olusturulur.
+Bu dosyayı USB kök dizinine kopyalayıp çalıştırın. İlk açılışta `vault` klasörü ve ayar dosyaları exe'nin bulunduğu yerde oluşturulur.
 
-## Davranis
+## Davranış
 
-- Ilk acilista master sifre ve hatirlatma belirlenir.
-- Master giristen sonra alanlar olusturulur.
-- Her alanin ayri parolasi, ayri rastgele AES-256 anahtari vardir.
-- Alan parolasi AES anahtari degildir; AES anahtari alan parolasindan turetilen anahtarla sarilip saklanir.
-- Dosya eklenince secilen dosyanin icerigi sifreli veriyle degistirilir, sonra `vault\users\...\files` altina rastgele isimle tasinir.
-- Klasor eklenince klasor ZIP paketi olarak sifrelenir, kasaya rastgele isimle tasinir ve orijinal klasor silinir.
-- Dosya isimleri ve metadata alan acilmadan okunamaz.
-- Cift tiklanan dosya `vault\temp` altina gecici cozulur, varsayilan uygulamayla acilir, uygulama kapaninca degisiklikler tekrar sifreli kasaya yazilir ve temp dosya silinmeye calisilir.
-- Cift tiklanan klasor `vault\temp` altina gecici acilir. Isiniz bitince uygulamadaki onay penceresinde Tamam'a basin; degisiklikler tekrar sifreli kasaya yazilir.
-- Her uygulama acilisinda `vault\temp` temizlenir.
-- `Bu bilgisayara guven` dugmesi Belgeler altinda bir guven dosyasi olusturur; o bilgisayarda master girisi atlanir.
+- İlk açılışta master şifre ve hatırlatma belirlenir.
+- Master girişten sonra alanlar oluşturulur.
+- Her alanın ayrı parolası, ayrı rastgele AES-256 anahtarı vardır.
+- Alan parolası AES anahtarı değildir; AES anahtarı alan parolasından türetilen anahtarla sarılıp saklanır.
+- Dosya eklenince seçilen dosyanın içeriği şifreli veriyle değiştirilir, sonra `vault\users\...\files` altına rastgele isimle taşınır.
+- Klasör eklenince klasör ZIP paketi olarak şifrelenir, kasaya rastgele isimle taşınır ve orijinal klasör silinir.
+- Dosya isimleri ve metadata alan açılmadan okunamaz.
+- Çift tıklanan dosya `vault\temp` altına geçici çözülür, varsayılan uygulamayla açılır, uygulama kapanınca değişiklikler tekrar şifreli kasaya yazılır ve temp dosya silinmeye çalışılır.
+- Çift tıklanan klasör `vault\temp` altına geçici açılır. İşiniz bitince uygulamadaki onay penceresinde Tamam'a basın; değişiklikler tekrar şifreli kasaya yazılır.
+- Her uygulama açılışında `vault\temp` temizlenir.
+- `Bu bilgisayara güven` düğmesi Belgeler altında bir güven dosyası oluşturur; o bilgisayarda master girişi atlanır.
 
-## Sinirlar
+## Sınırlar
 
-- Dosya acildiginda plain kopya gecici olarak USB'deki `vault\temp` altinda bulunur.
-- Dosyayi acan harici program kendi cache, recent file veya autosave verisini birakabilir.
+- Dosya açıldığında plain kopya geçici olarak USB'deki `vault\temp` altında bulunur.
+- Dosyayı açan harici program kendi cache, recent file veya autosave verisini bırakabilir.
 - Parola unutulursa kurtarma yoktur.

@@ -367,7 +367,7 @@ public sealed class VaultStore
             var targetFolder = Path.Combine(targetDirectory, metadata.OriginalName);
             if (Directory.Exists(targetFolder) || File.Exists(targetFolder))
             {
-                throw new IOException("Eski konumda ayni isimde bir dosya veya klasor var.");
+                throw new IOException("Eski konumda aynı isimde bir dosya veya klasör var.");
             }
 
             var tempFolder = DecryptFolderToTemp(user, record);
@@ -392,7 +392,7 @@ public sealed class VaultStore
         var targetPath = Path.Combine(targetDirectory, metadata.OriginalName);
         if (File.Exists(targetPath) || Directory.Exists(targetPath))
         {
-            throw new IOException("Eski konumda ayni isimde bir dosya veya klasor var.");
+            throw new IOException("Eski konumda aynı isimde bir dosya veya klasör var.");
         }
 
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
@@ -554,7 +554,7 @@ public sealed class VaultStore
         var appRoot = Path.GetFullPath(AppRoot);
         if (!combined.StartsWith(appRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Kayitli eski konum USB kokunun disinda.");
+            throw new InvalidOperationException("Kayıtlı eski konum USB kökünün dışında.");
         }
 
         return combined;

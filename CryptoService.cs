@@ -166,7 +166,7 @@ public static class CryptoService
         input.ReadExactly(magic);
         if (!magic.SequenceEqual(StreamingMagic))
         {
-            throw new InvalidOperationException("Sifreli dosya bicimi okunamadi.");
+            throw new InvalidOperationException("Şifreli dosya biçimi okunamadı.");
         }
 
         var chunkSizeBytes = new byte[sizeof(int)];
@@ -174,7 +174,7 @@ public static class CryptoService
         var chunkSize = BitConverter.ToInt32(chunkSizeBytes);
         if (chunkSize <= 0 || chunkSize > 64 * 1024 * 1024)
         {
-            throw new InvalidOperationException("Sifreli dosya parca boyutu gecersiz.");
+            throw new InvalidOperationException("Şifreli dosya parça boyutu geçersiz.");
         }
 
         var noncePrefix = new byte[4];
@@ -192,7 +192,7 @@ public static class CryptoService
             var length = BitConverter.ToInt32(lengthBytes);
             if (length <= 0 || length > chunkSize)
             {
-                throw new InvalidOperationException("Sifreli dosya parcasi gecersiz.");
+                throw new InvalidOperationException("Şifreli dosya parçası geçersiz.");
             }
 
             input.ReadExactly(tag);

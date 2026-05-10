@@ -337,8 +337,8 @@ public partial class MainWindow : Window
 
         var result = MessageBox.Show(
             this,
-            $"{item.Name} kasadan cikarilip eski konumuna geri koyulsun mu?",
-            "Eski yerine cikar",
+            $"{item.Name} kasadan çıkarılıp eski konumuna geri koyulsun mu?",
+            "Eski yerine çıkar",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
 
@@ -351,11 +351,11 @@ public partial class MainWindow : Window
         {
             var restoredPath = _store.RestoreToOriginalLocation(_selectedUser, item.Record);
             LoadSelectedUserFiles();
-            MessageBox.Show(this, $"Geri koyuldu:\n{restoredPath}", "Tamamlandi", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, $"Geri koyuldu:\n{restoredPath}", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Geri koyulamadi", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, "Geri koyulamadı", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
