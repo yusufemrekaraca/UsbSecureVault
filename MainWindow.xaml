@@ -92,7 +92,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{StaticResource TopBarBrush}" BorderBrush="#27272A" BorderThickness="0,0,0,1" Padding="18,16">
+        <Border Background="{StaticResource TopBarBrush}" BorderBrush="#27272A" BorderThickness="0,0,0,1" Padding="18,18">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="EmergencyInfoButton" Content="Emergency Info" Margin="0,0,10,0" Click="EmergencyInfoButton_Click" Visibility="Collapsed"/>
@@ -101,12 +101,12 @@
                     <Button Content="Çıkış" Click="LogoutButton_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="92" Height="92" CornerRadius="18" BorderThickness="2" BorderBrush="#FACC15" Background="#0B0B0D" Margin="0,0,18,0">
+                    <Border Width="112" Height="112" CornerRadius="20" BorderThickness="2" BorderBrush="#FACC15" Background="#0B0B0D" Margin="0,0,20,0">
                         <Border.Effect>
-                            <DropShadowEffect Color="#FACC15" BlurRadius="22" ShadowDepth="0" Opacity="0.55"/>
+                            <DropShadowEffect Color="#FACC15" BlurRadius="24" ShadowDepth="0" Opacity="0.5"/>
                         </Border.Effect>
                         <Grid ClipToBounds="True">
-                            <Image Source="Assets/logo.png" Stretch="UniformToFill" Margin="4"/>
+                            <Image Source="Assets/logo.png" Stretch="UniformToFill" Margin="3"/>
                         </Grid>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
