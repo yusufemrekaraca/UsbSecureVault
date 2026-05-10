@@ -184,12 +184,14 @@ public partial class MainWindow : Window
     {
         if (UsersList.SelectedItem is not UserListItem item)
         {
+            DeleteUserButton.IsEnabled = false;
             return;
         }
 
         _selectedUser = _users.FirstOrDefault(user => user.Id == item.Id);
         if (_selectedUser is null)
         {
+            DeleteUserButton.IsEnabled = false;
             return;
         }
 
@@ -210,7 +212,56 @@ public partial class MainWindow : Window
             }
         }
 
+        DeleteUserButton.IsEnabled = true;
         LoadSelectedUserFiles();
+    }
+
+    private void DeleteUserButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedUser is null)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            this,
+            $"'{_selectedUser.Name}' alanı silinsin mi?\n\nEvet: İçindekileri eski yerlerine geri koy ve alanı sil.\nHayır: İçindekileri File Shredder ile kalıcı sil.\nİptal: Vazgeç.",
+            "Alanı sil",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Cancel)
+        {
+            return;
+        }
+
+        var restoreContents = result == MessageBoxResult.Yes;
+        if (restoreContents && !EnsureUserUnlocked(_selectedUser))
+        {
+            return;
+        }
+
+        try
+        {
+            var deletedUser = _selectedUser;
+            _store.DeleteUser(deletedUser, restoreContents);
+            if (deletedUser.UnlockedKey is not null)
+            {
+                CryptographicOperations.ZeroMemory(deletedUser.UnlockedKey);
+                deletedUser.UnlockedKey = null;
+            }
+
+            _users.RemoveAll(user => user.Id == deletedUser.Id);
+            _selectedUser = null;
+            UsersList.SelectedItem = null;
+            RefreshUsers();
+            ResetFilePanel();
+            MessageBox.Show(this, "Alan silindi.", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Alan silinemedi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void AddFileButton_Click(object sender, RoutedEventArgs e)
@@ -389,6 +440,57 @@ public partial class MainWindow : Window
         }
     }
 
+    private void DeleteVaultButton_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            this,
+            "Tüm kasa silinsin mi?\n\nEvet: Tüm alanlardaki içerikleri eski yerlerine geri koy ve kasayı sil.\nHayır: Tüm kasayı File Shredder ile kalıcı sil.\nİptal: Vazgeç.",
+            "Tüm kasayı sil",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Cancel)
+        {
+            return;
+        }
+
+        var restoreContents = result == MessageBoxResult.Yes;
+        if (restoreContents)
+        {
+            foreach (var user in _users)
+            {
+                if (!EnsureUserUnlocked(user))
+                {
+                    return;
+                }
+            }
+        }
+
+        try
+        {
+            _store.DeleteVault(_users, restoreContents);
+            foreach (var user in _users)
+            {
+                if (user.UnlockedKey is not null)
+                {
+                    CryptographicOperations.ZeroMemory(user.UnlockedKey);
+                    user.UnlockedKey = null;
+                }
+            }
+
+            _users = [];
+            _selectedUser = null;
+            UsersList.SelectedItem = null;
+            FilesList.ItemsSource = null;
+            MessageBox.Show(this, "Kasa silindi.", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowSetup();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Kasa silinemedi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void LockUserButton_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedUser?.UnlockedKey is not null)
@@ -411,6 +513,7 @@ public partial class MainWindow : Window
         MasterLoginPanel.Visibility = Visibility.Collapsed;
         VaultPanel.Visibility = Visibility.Collapsed;
         EmergencyInfoButton.Visibility = Visibility.Collapsed;
+        DeleteVaultButton.Visibility = Visibility.Collapsed;
         TrustButton.Visibility = Visibility.Collapsed;
         RefreshEmergencyInfoBanner();
         StatusText.Text = "İlk kurulum gerekiyor";
@@ -423,6 +526,7 @@ public partial class MainWindow : Window
         MasterLoginPanel.Visibility = Visibility.Visible;
         VaultPanel.Visibility = Visibility.Collapsed;
         EmergencyInfoButton.Visibility = Visibility.Collapsed;
+        DeleteVaultButton.Visibility = Visibility.Collapsed;
         TrustButton.Visibility = Visibility.Collapsed;
         RefreshEmergencyInfoBanner();
         MasterHintText.Text = string.IsNullOrWhiteSpace(config.MasterHint)
@@ -437,6 +541,7 @@ public partial class MainWindow : Window
         MasterLoginPanel.Visibility = Visibility.Collapsed;
         VaultPanel.Visibility = Visibility.Visible;
         EmergencyInfoButton.Visibility = Visibility.Visible;
+        DeleteVaultButton.Visibility = Visibility.Visible;
         TrustButton.Visibility = Visibility.Visible;
         HideEmergencyInfoBanner();
         StatusText.Text = $"Kasa konumu: {_store.VaultRoot}";
@@ -469,6 +574,7 @@ public partial class MainWindow : Window
     {
         UsersList.ItemsSource = null;
         UsersList.ItemsSource = _users.Select(user => new UserListItem { Id = user.Id, Name = user.Name }).ToList();
+        DeleteUserButton.IsEnabled = _selectedUser is not null;
     }
 
     private void LoadSelectedUserFiles()
@@ -507,8 +613,31 @@ public partial class MainWindow : Window
         RestoreFileButton.IsEnabled = false;
         DeleteFileButton.IsEnabled = false;
         LockUserButton.IsEnabled = false;
+        DeleteUserButton.IsEnabled = _selectedUser is not null;
         SelectedUserTitle.Text = "Alan seçin";
         SelectedUserSubtitle.Text = "Dosyalar yalnızca alan şifresi girilince görünür.";
+    }
+
+    private bool EnsureUserUnlocked(UserRecord user)
+    {
+        if (user.UnlockedKey is not null)
+        {
+            return true;
+        }
+
+        var password = DialogHelpers.PromptPassword(this, $"{user.Name} Girişi", "Alan şifresi", user.PasswordHint);
+        if (password is null)
+        {
+            return false;
+        }
+
+        if (_store.TryUnlockUser(user, password, out var error))
+        {
+            return true;
+        }
+
+        MessageBox.Show(this, error, "Giriş başarısız", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return false;
     }
 
     private void ClearPasswordBoxes()

@@ -14,6 +14,7 @@
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button x:Name="EmergencyInfoButton" Content="Emergency Info" Margin="0,0,10,0" Padding="12,7" Click="EmergencyInfoButton_Click" Visibility="Collapsed"/>
+                    <Button x:Name="DeleteVaultButton" Content="Tüm Kasayı Sil" Margin="0,0,10,0" Padding="12,7" Click="DeleteVaultButton_Click" Visibility="Collapsed"/>
                     <Button x:Name="TrustButton" Content="Bu bilgisayara güven" Margin="0,0,10,0" Padding="12,7" Click="TrustButton_Click"/>
                     <Button Content="Çıkış" Padding="12,7" Click="LogoutButton_Click"/>
                 </StackPanel>
@@ -65,7 +66,10 @@
 
                 <Border Background="White" CornerRadius="6" Padding="14" Margin="0,0,14,0">
                     <DockPanel>
-                        <Button DockPanel.Dock="Bottom" Content="Yeni Alan Oluştur" Padding="10,8" Margin="0,12,0,0" Click="CreateUserButton_Click"/>
+                        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                            <Button Content="Yeni Alan Oluştur" Padding="10,8" Click="CreateUserButton_Click"/>
+                            <Button x:Name="DeleteUserButton" Content="Alanı Sil" Padding="10,8" Margin="0,8,0,0" Click="DeleteUserButton_Click" IsEnabled="False"/>
+                        </StackPanel>
                         <StackPanel>
                             <TextBlock Text="Alanlar" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
                             <ListBox x:Name="UsersList" DisplayMemberPath="Name" SelectionChanged="UsersList_SelectionChanged"/>

@@ -42,7 +42,7 @@ public sealed class VaultStore
         EnsureFolders();
         foreach (var file in Directory.EnumerateFiles(TempRoot, "*", SearchOption.AllDirectories))
         {
-            TryDelete(file);
+            TryShredFile(file);
         }
 
         foreach (var dir in Directory.EnumerateDirectories(TempRoot))
@@ -343,12 +343,61 @@ public sealed class VaultStore
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
         if (File.Exists(encryptedPath))
         {
-            File.SetAttributes(encryptedPath, FileAttributes.Normal);
-            File.Delete(encryptedPath);
+            ShredFile(encryptedPath);
         }
 
         user.Files.RemoveAll(file => file.Id == record.Id);
         SaveUser(user);
+    }
+
+    public void DeleteUser(UserRecord user, bool restoreContents)
+    {
+        if (restoreContents && user.UnlockedKey is null)
+        {
+            throw new InvalidOperationException("Alan kilitli.");
+        }
+
+        foreach (var record in user.Files.ToList())
+        {
+            if (restoreContents)
+            {
+                RestoreToOriginalLocation(user, record);
+            }
+            else
+            {
+                var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
+                if (File.Exists(encryptedPath))
+                {
+                    ShredFile(encryptedPath);
+                }
+
+                user.Files.RemoveAll(file => file.Id == record.Id);
+            }
+        }
+
+        var userRoot = GetUserRoot(user.Id);
+        if (Directory.Exists(userRoot))
+        {
+            ShredDirectory(userRoot);
+        }
+    }
+
+    public void DeleteVault(IEnumerable<UserRecord> users, bool restoreContents)
+    {
+        if (restoreContents)
+        {
+            foreach (var user in users.ToList())
+            {
+                DeleteUser(user, true);
+            }
+        }
+
+        if (Directory.Exists(VaultRoot))
+        {
+            ShredDirectory(VaultRoot);
+        }
+
+        Config = null;
     }
 
     public string RestoreToOriginalLocation(UserRecord user, FileRecord record)
@@ -586,5 +635,64 @@ public sealed class VaultStore
             }
         }
         catch { }
+    }
+
+    private static void ShredDirectory(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        {
+            ShredFile(file);
+        }
+
+        foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories)
+                     .OrderByDescending(dir => dir.Length))
+        {
+            try { Directory.Delete(dir, false); } catch { }
+        }
+
+        try { Directory.Delete(path, false); } catch { }
+    }
+
+    private static void ShredFile(string path)
+    {
+        File.SetAttributes(path, FileAttributes.Normal);
+        var buffer = new byte[1024 * 1024];
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.None, buffer.Length))
+        {
+            var remaining = stream.Length;
+            stream.Position = 0;
+            while (remaining > 0)
+            {
+                var write = (int)Math.Min(buffer.Length, remaining);
+                RandomNumberGenerator.Fill(buffer.AsSpan(0, write));
+                stream.Write(buffer, 0, write);
+                remaining -= write;
+            }
+
+            stream.Flush(true);
+        }
+
+        CryptographicOperations.ZeroMemory(buffer);
+        File.Delete(path);
+    }
+
+    private static void TryShredFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                ShredFile(path);
+            }
+        }
+        catch
+        {
+            TryDelete(path);
+        }
     }
 }

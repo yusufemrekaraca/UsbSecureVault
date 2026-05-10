@@ -23,6 +23,8 @@ Bu dosyayı USB kök dizinine kopyalayıp çalıştırın. İlk açılışta `va
 - Dosya isimleri ve metadata alan açılmadan okunamaz.
 - Çift tıklanan dosya `vault\temp` altına geçici çözülür, varsayılan uygulamayla açılır, uygulama kapanınca değişiklikler tekrar şifreli kasaya yazılır ve temp dosya silinmeye çalışılır.
 - Çift tıklanan klasör `vault\temp` altına geçici açılır. İşiniz bitince uygulamadaki onay penceresinde Tamam'a basın; değişiklikler tekrar şifreli kasaya yazılır.
+- Seçili alan silinirken içerikleri eski yerlerine geri koyma veya File Shredder ile kalıcı silme seçilebilir.
+- Tüm kasa tek işlemle silinebilir; istenirse tüm alanlardaki içerikler eski yerlerine geri koyulur.
 - Her uygulama açılışında `vault\temp` temizlenir.
 - `Bu bilgisayara güven` düğmesi Belgeler altında bir güven dosyası oluşturur; o bilgisayarda master girişi atlanır.
 
@@ -30,4 +32,5 @@ Bu dosyayı USB kök dizinine kopyalayıp çalıştırın. İlk açılışta `va
 
 - Dosya açıldığında plain kopya geçici olarak USB'deki `vault\temp` altında bulunur.
 - Dosyayı açan harici program kendi cache, recent file veya autosave verisini bırakabilir.
+- File Shredder dosyayı aynı uzunlukta üzerine yazarak siler ve ekstra disk alanı kullanmaz; USB/SSD wear leveling nedeniyle fiziksel hücre düzeyinde mutlak silme garantisi vermez.
 - Parola unutulursa kurtarma yoktur.
