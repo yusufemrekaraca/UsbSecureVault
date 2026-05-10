@@ -88,7 +88,6 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -106,48 +105,51 @@
                             <DropShadowEffect Color="#FACC15" BlurRadius="24" ShadowDepth="0" Opacity="0.5"/>
                         </Border.Effect>
                         <Grid ClipToBounds="True">
-                            <Image Source="Assets/logo.png" Stretch="UniformToFill" Margin="3"/>
+                            <Image Source="Assets/logo-more-clean.png" Stretch="UniformToFill" Margin="3"/>
                         </Grid>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Karaca's USB Vault" FontSize="26" FontWeight="SemiBold"/>
                         <TextBlock x:Name="StatusText" Text="Hazır" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        <Border x:Name="EmergencyInfoBanner" Background="{StaticResource EmergencyBrush}" CornerRadius="6" Padding="10,6" Margin="0,9,0,0" Visibility="Collapsed">
+                            <DockPanel>
+                                <TextBlock Text="EMERGENCY INFO" Foreground="{StaticResource EmergencyTextBrush}" FontWeight="Black" Margin="0,0,12,0" DockPanel.Dock="Left"/>
+                                <TextBlock x:Name="EmergencyInfoText" Foreground="{StaticResource EmergencyTextBrush}" FontWeight="Black" TextWrapping="Wrap" MaxWidth="520"/>
+                            </DockPanel>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <Border x:Name="EmergencyInfoBanner" Grid.Row="1" Background="{StaticResource EmergencyBrush}" Padding="18,12" Visibility="Collapsed">
-            <DockPanel>
-                <TextBlock Text="EMERGENCY INFO" Foreground="{StaticResource EmergencyTextBrush}" FontWeight="Black" Margin="0,0,14,0" DockPanel.Dock="Left"/>
-                <TextBlock x:Name="EmergencyInfoText" Foreground="{StaticResource EmergencyTextBrush}" FontWeight="Black" TextWrapping="Wrap"/>
-            </DockPanel>
-        </Border>
-
-        <Grid Grid.Row="2" Margin="18">
+        <Grid Grid.Row="1" Margin="18">
             <Border x:Name="SetupPanel" Style="{StaticResource PanelBorderStyle}" Padding="28" Visibility="Collapsed">
-                <StackPanel Width="430" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="İlk Kurulum" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,20"/>
-                    <TextBlock Text="Master şifre" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                    <PasswordBox x:Name="SetupPasswordBox" Margin="0,0,0,12"/>
-                    <TextBlock Text="Master şifre tekrar" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                    <PasswordBox x:Name="SetupPasswordConfirmBox" Margin="0,0,0,12"/>
-                    <TextBlock Text="Hatırlatma" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                    <TextBox x:Name="SetupHintBox" Margin="0,0,0,12"/>
-                    <TextBlock Text="Emergency info" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                    <TextBox x:Name="SetupEmergencyInfoBox" Margin="0,0,0,18" MinHeight="74" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-                    <Button Content="Kasayı Oluştur" Style="{StaticResource PrimaryButtonStyle}" Click="SetupButton_Click"/>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Width="430" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="İlk Kurulum" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                        <TextBlock Text="Master şifre" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                        <PasswordBox x:Name="SetupPasswordBox" Margin="0,0,0,12"/>
+                        <TextBlock Text="Master şifre tekrar" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                        <PasswordBox x:Name="SetupPasswordConfirmBox" Margin="0,0,0,12"/>
+                        <TextBlock Text="Hatırlatma" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                        <TextBox x:Name="SetupHintBox" Margin="0,0,0,12"/>
+                        <TextBlock Text="Emergency info" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                        <TextBox x:Name="SetupEmergencyInfoBox" Margin="0,0,0,18" MinHeight="74" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                        <Button Content="Kasayı Oluştur" Style="{StaticResource PrimaryButtonStyle}" Click="SetupButton_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
 
             <Border x:Name="MasterLoginPanel" Style="{StaticResource PanelBorderStyle}" Padding="28" Visibility="Collapsed">
-                <StackPanel Width="430" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="Master Giriş" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,18"/>
-                    <TextBlock x:Name="MasterHintText" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
-                    <TextBlock Text="Master şifre" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                    <PasswordBox x:Name="MasterPasswordBox" Margin="0,0,0,18"/>
-                    <Button Content="Giriş Yap" Style="{StaticResource PrimaryButtonStyle}" Click="MasterLoginButton_Click"/>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Width="430" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="Master Giriş" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,18"/>
+                        <TextBlock x:Name="MasterHintText" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                        <TextBlock Text="Master şifre" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                        <PasswordBox x:Name="MasterPasswordBox" Margin="0,0,0,18"/>
+                        <Button Content="Giriş Yap" Style="{StaticResource PrimaryButtonStyle}" Click="MasterLoginButton_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
 
             <Grid x:Name="VaultPanel" Visibility="Collapsed">
