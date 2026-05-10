@@ -4,7 +4,7 @@
         xmlns:ui="http://schemas.modernwpf.com/2019"
         ui:WindowHelper.UseModernWindowStyle="True"
         Title="USB Secure Vault" Height="620" Width="1040" MinHeight="580" MinWidth="920"
-        WindowStartupLocation="CenterScreen" Background="{StaticResource AppBackgroundBrush}">
+        WindowStartupLocation="CenterScreen" Background="#09090B">
     <Window.Resources>
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#09090B"/>
         <SolidColorBrush x:Key="TopBarBrush" Color="#111113"/>
