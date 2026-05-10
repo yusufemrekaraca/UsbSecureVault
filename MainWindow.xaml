@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterScreen" Background="#09090B">
     <Window.Resources>
         <SolidColorBrush x:Key="AppBackgroundBrush" Color="#09090B"/>
-        <SolidColorBrush x:Key="TopBarBrush" Color="#111113"/>
+        <SolidColorBrush x:Key="TopBarBrush" Color="#101012"/>
         <SolidColorBrush x:Key="PanelBrush" Color="#18181B"/>
         <SolidColorBrush x:Key="PanelAltBrush" Color="#202024"/>
         <SolidColorBrush x:Key="BorderBrushDark" Color="#3F3F46"/>
@@ -92,26 +92,26 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{StaticResource TopBarBrush}" BorderBrush="#2D1111" BorderThickness="0,0,0,1" Padding="18,14">
+        <Border Background="{StaticResource TopBarBrush}" BorderBrush="#27272A" BorderThickness="0,0,0,1" Padding="18,16">
             <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="EmergencyInfoButton" Content="Emergency Info" Margin="0,0,10,0" Click="EmergencyInfoButton_Click" Visibility="Collapsed"/>
                     <Button x:Name="DeleteVaultButton" Content="Tüm Kasayı Sil" Style="{StaticResource DangerButtonStyle}" Margin="0,0,10,0" Click="DeleteVaultButton_Click" Visibility="Collapsed"/>
                     <Button x:Name="TrustButton" Content="Bu bilgisayara güven" Margin="0,0,10,0" Click="TrustButton_Click"/>
                     <Button Content="Çıkış" Click="LogoutButton_Click"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Border Width="54" Height="54" CornerRadius="12" BorderThickness="2" BorderBrush="#FACC15" Background="#111113" Margin="0,0,14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="92" Height="92" CornerRadius="18" BorderThickness="2" BorderBrush="#FACC15" Background="#0B0B0D" Margin="0,0,18,0">
                         <Border.Effect>
-                            <DropShadowEffect Color="#FACC15" BlurRadius="18" ShadowDepth="0" Opacity="0.65"/>
+                            <DropShadowEffect Color="#FACC15" BlurRadius="22" ShadowDepth="0" Opacity="0.55"/>
                         </Border.Effect>
                         <Grid ClipToBounds="True">
-                            <Image Source="Assets/logo.png" Stretch="UniformToFill" Margin="3"/>
+                            <Image Source="Assets/logo.png" Stretch="UniformToFill" Margin="4"/>
                         </Grid>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Karaca's USB Vault" FontSize="22" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="StatusText" Text="Hazır" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3,0,0"/>
+                        <TextBlock Text="Karaca's USB Vault" FontSize="26" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="StatusText" Text="Hazır" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </DockPanel>
