@@ -291,11 +291,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        var mode = DialogHelpers.PromptFileAddMode(this, Path.GetFileName(sourcePath));
+        if (mode is null)
+        {
+            return;
+        }
+
         try
         {
-            _store.AddFile(_selectedUser, sourcePath);
+            _store.AddFile(_selectedUser, sourcePath, mode.Value);
             LoadSelectedUserFiles();
-            MessageBox.Show(this, "Dosya şifrelendi ve kasaya taşındı. Orijinal konumda plain dosya kalmadı.", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            var message = mode == FileAddMode.Encrypt
+                ? "Dosya şifrelendi ve kasaya taşındı. Orijinal konumda plain dosya kalmadı."
+                : "Dosya hızlı bozma yöntemiyle kasaya taşındı. İçerik şifrelenmedi; adı ve uzantısı gizlendi.";
+            MessageBox.Show(this, message, "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -328,11 +337,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        var mode = DialogHelpers.PromptFileAddMode(this, new DirectoryInfo(sourcePath).Name);
+        if (mode is null)
+        {
+            return;
+        }
+
         try
         {
-            _store.AddFolder(_selectedUser, sourcePath);
+            _store.AddFolder(_selectedUser, sourcePath, mode.Value);
             LoadSelectedUserFiles();
-            MessageBox.Show(this, "Klasör şifrelendi ve kasaya taşındı. Orijinal konumda plain klasör kalmadı.", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            var message = mode == FileAddMode.Encrypt
+                ? "Klasör şifrelendi ve kasaya taşındı. Orijinal konumda plain klasör kalmadı."
+                : "Klasör hızlı bozma yöntemiyle kasaya taşındı. İçerik şifrelenmedi; adı ve uzantısı gizlendi.";
+            MessageBox.Show(this, message, "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -353,7 +371,8 @@ public partial class MainWindow : Window
             {
                 var tempFolder = _store.DecryptFolderToTemp(_selectedUser, item.Record);
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tempFolder) { UseShellExecute = true });
-                MessageBox.Show(this, "Klasördeki işiniz bitince Tamam'a basın. Değişiklikler tekrar şifreli kasaya yazılacak.", "Klasör açık", MessageBoxButton.OK, MessageBoxImage.Information);
+                var modeText = item.Record.StorageMode == FileStorageModes.Obfuscated ? "bozulmuş kasaya" : "şifreli kasaya";
+                MessageBox.Show(this, $"Klasördeki işiniz bitince Tamam'a basın. Değişiklikler tekrar {modeText} yazılacak.", "Klasör açık", MessageBoxButton.OK, MessageBoxImage.Information);
                 _store.SaveFolderBackAndClean(_selectedUser, item.Record, tempFolder);
                 LoadSelectedUserFiles();
             }

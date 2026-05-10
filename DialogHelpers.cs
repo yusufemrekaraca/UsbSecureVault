@@ -5,6 +5,65 @@ namespace UsbSecureVault;
 
 public static class DialogHelpers
 {
+    public static FileAddMode? PromptFileAddMode(Window owner, string itemName)
+    {
+        var window = new Window
+        {
+            Title = "Saklama yöntemi",
+            Owner = owner,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            Width = 460,
+            SizeToContent = SizeToContent.Height,
+            Background = System.Windows.Media.Brushes.White
+        };
+
+        var root = new StackPanel { Margin = new Thickness(18) };
+        root.Children.Add(new TextBlock
+        {
+            Text = itemName,
+            FontWeight = FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+        root.Children.Add(new TextBlock
+        {
+            Text = "Şifrele: güçlü koruma, büyük dosyalarda daha yavaş.\nBoz: hızlı saklama, içerik şifrelenmez; sadece ad/uzantı gizlenir.",
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 18)
+        });
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+
+        var cancel = new Button { Content = "İptal", MinWidth = 82, Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 0, 8, 0) };
+        var obfuscate = new Button { Content = "Boz", MinWidth = 82, Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 0, 8, 0) };
+        var encrypt = new Button { Content = "Şifrele", MinWidth = 92, Padding = new Thickness(10, 6, 10, 6), IsDefault = true };
+
+        cancel.Click += (_, _) => window.DialogResult = false;
+        obfuscate.Click += (_, _) =>
+        {
+            window.Tag = FileAddMode.Obfuscate;
+            window.DialogResult = true;
+        };
+        encrypt.Click += (_, _) =>
+        {
+            window.Tag = FileAddMode.Encrypt;
+            window.DialogResult = true;
+        };
+
+        buttons.Children.Add(cancel);
+        buttons.Children.Add(obfuscate);
+        buttons.Children.Add(encrypt);
+        root.Children.Add(buttons);
+        window.Content = root;
+
+        return window.ShowDialog() == true ? (FileAddMode?)window.Tag : null;
+    }
+
     public static string? PromptText(Window owner, string title, string label)
     {
         var input = new TextBox { Margin = new Thickness(0, 4, 0, 14), Padding = new Thickness(8) };
@@ -137,6 +196,12 @@ public static class DialogHelpers
 
         return window.ShowDialog() == true ? (T?)window.Tag : default;
     }
+}
+
+public enum FileAddMode
+{
+    Encrypt,
+    Obfuscate
 }
 
 public sealed record CreateUserResult(string Name, string Password, string Hint);

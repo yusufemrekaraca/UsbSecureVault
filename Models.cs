@@ -34,6 +34,7 @@ public sealed class FileRecord
 {
     public string Id { get; set; } = "";
     public string StoredName { get; set; } = "";
+    public string StorageMode { get; set; } = FileStorageModes.Encrypted;
     public string MetadataNonce { get; set; } = "";
     public string MetadataTag { get; set; } = "";
     public string MetadataCiphertext { get; set; } = "";
@@ -53,6 +54,12 @@ public sealed class FileMetadata
     public bool IsFolder { get; set; }
 }
 
+public static class FileStorageModes
+{
+    public const string Encrypted = "Encrypted";
+    public const string Obfuscated = "Obfuscated";
+}
+
 public sealed class UserListItem
 {
     public required string Id { get; init; }
@@ -64,6 +71,7 @@ public sealed class FileListItem
     public required FileRecord Record { get; init; }
     public required FileMetadata Metadata { get; init; }
     public string Name => Metadata.IsFolder ? $"[Klasör] {Metadata.OriginalName}" : Metadata.OriginalName;
+    public string ModeText => Record.StorageMode == FileStorageModes.Obfuscated ? "Boz" : "Şifreli";
     public string SizeText => FormatBytes(Metadata.OriginalLength);
     public string AddedText => Record.AddedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
 

@@ -195,7 +195,7 @@ public sealed class VaultStore
         }
     }
 
-    public FileRecord AddFile(UserRecord user, string sourcePath)
+    public FileRecord AddFile(UserRecord user, string sourcePath, FileAddMode mode)
     {
         if (user.UnlockedKey is null)
         {
@@ -213,15 +213,28 @@ public sealed class VaultStore
         };
 
         var id = Guid.NewGuid().ToString("N");
-        var storedName = $"{Guid.NewGuid():N}.usv";
+        var storageMode = mode == FileAddMode.Obfuscate ? FileStorageModes.Obfuscated : FileStorageModes.Encrypted;
+        var storedName = storageMode == FileStorageModes.Obfuscated
+            ? $"{Guid.NewGuid():N}.blob"
+            : $"{Guid.NewGuid():N}.usv";
         var destination = Path.Combine(GetUserFilesRoot(user.Id), storedName);
-        CryptoService.EncryptFileInPlaceAndMove(user.UnlockedKey, sourcePath, destination, out var contentNonce, out var contentTag);
+        var contentNonce = "";
+        var contentTag = "";
+        if (storageMode == FileStorageModes.Obfuscated)
+        {
+            File.Move(sourcePath, destination);
+        }
+        else
+        {
+            CryptoService.EncryptFileInPlaceAndMove(user.UnlockedKey, sourcePath, destination, out contentNonce, out contentTag);
+        }
 
         var metadataBlob = CryptoService.EncryptJson(user.UnlockedKey, metadata, CryptoService.Utf8(id));
         var record = new FileRecord
         {
             Id = id,
             StoredName = storedName,
+            StorageMode = storageMode,
             ContentNonce = contentNonce,
             ContentTag = contentTag,
             CipherLength = new FileInfo(destination).Length,
@@ -236,11 +249,49 @@ public sealed class VaultStore
         return record;
     }
 
-    public FileRecord AddFolder(UserRecord user, string sourcePath)
+    public FileRecord AddFolder(UserRecord user, string sourcePath, FileAddMode mode)
     {
         if (user.UnlockedKey is null)
         {
             throw new InvalidOperationException("Alan kilitli.");
+        }
+
+        var storageMode = mode == FileAddMode.Obfuscate ? FileStorageModes.Obfuscated : FileStorageModes.Encrypted;
+        if (storageMode == FileStorageModes.Obfuscated)
+        {
+            var metadata = new FileMetadata
+            {
+                OriginalName = new DirectoryInfo(sourcePath).Name,
+                OriginalExtension = "",
+                OriginalRelativeDirectory = GetRelativeDirectory(Directory.GetParent(sourcePath)?.FullName ?? AppRoot),
+                OriginalLength = GetDirectorySize(sourcePath),
+                OriginalLastWriteTime = new DateTimeOffset(DateTime.SpecifyKind(Directory.GetLastWriteTimeUtc(sourcePath), DateTimeKind.Utc)),
+                IsFolder = true
+            };
+
+            var id = Guid.NewGuid().ToString("N");
+            var storedName = $"{Guid.NewGuid():N}.box";
+            var destination = Path.Combine(GetUserFilesRoot(user.Id), storedName);
+            Directory.Move(sourcePath, destination);
+
+            var metadataBlob = CryptoService.EncryptJson(user.UnlockedKey, metadata, CryptoService.Utf8(id));
+            var record = new FileRecord
+            {
+                Id = id,
+                StoredName = storedName,
+                StorageMode = storageMode,
+                ContentNonce = "",
+                ContentTag = "",
+                CipherLength = GetDirectorySize(destination),
+                MetadataNonce = metadataBlob.Nonce,
+                MetadataTag = metadataBlob.Tag,
+                MetadataCiphertext = metadataBlob.Ciphertext,
+                AddedAt = DateTimeOffset.UtcNow
+            };
+
+            user.Files.Add(record);
+            SaveUser(user);
+            return record;
         }
 
         var packagePath = Path.Combine(TempRoot, $"{Guid.NewGuid():N}.zip");
@@ -268,6 +319,7 @@ public sealed class VaultStore
             {
                 Id = id,
                 StoredName = storedName,
+                StorageMode = storageMode,
                 ContentNonce = contentNonce,
                 ContentTag = contentTag,
                 CipherLength = new FileInfo(destination).Length,
@@ -313,7 +365,14 @@ public sealed class VaultStore
         Directory.CreateDirectory(tempDir);
         var tempPath = Path.Combine(tempDir, metadata.OriginalName);
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
-        CryptoService.DecryptFileToPath(user.UnlockedKey, record, encryptedPath, tempPath);
+        if (IsObfuscated(record))
+        {
+            File.Copy(encryptedPath, tempPath, false);
+        }
+        else
+        {
+            CryptoService.DecryptFileToPath(user.UnlockedKey, record, encryptedPath, tempPath);
+        }
         return tempPath;
     }
 
@@ -329,12 +388,18 @@ public sealed class VaultStore
         Directory.CreateDirectory(tempDir);
         var zipPath = Path.Combine(tempDir, $"{Guid.NewGuid():N}.zip");
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
-        CryptoService.DecryptFileToPath(user.UnlockedKey, record, encryptedPath, zipPath);
-
         var folderPath = Path.Combine(tempDir, metadata.OriginalName);
-        Directory.CreateDirectory(folderPath);
-        ZipFile.ExtractToDirectory(zipPath, folderPath, true);
-        TryDelete(zipPath);
+        if (IsObfuscated(record))
+        {
+            CopyDirectory(encryptedPath, folderPath);
+        }
+        else
+        {
+            CryptoService.DecryptFileToPath(user.UnlockedKey, record, encryptedPath, zipPath);
+            Directory.CreateDirectory(folderPath);
+            ZipFile.ExtractToDirectory(zipPath, folderPath, true);
+            TryDelete(zipPath);
+        }
         return folderPath;
     }
 
@@ -344,6 +409,10 @@ public sealed class VaultStore
         if (File.Exists(encryptedPath))
         {
             ShredFile(encryptedPath);
+        }
+        else if (Directory.Exists(encryptedPath))
+        {
+            ShredDirectory(encryptedPath);
         }
 
         user.Files.RemoveAll(file => file.Id == record.Id);
@@ -369,6 +438,10 @@ public sealed class VaultStore
                 if (File.Exists(encryptedPath))
                 {
                     ShredFile(encryptedPath);
+                }
+                else if (Directory.Exists(encryptedPath))
+                {
+                    ShredDirectory(encryptedPath);
                 }
 
                 user.Files.RemoveAll(file => file.Id == record.Id);
@@ -419,6 +492,15 @@ public sealed class VaultStore
                 throw new IOException("Eski konumda aynı isimde bir dosya veya klasör var.");
             }
 
+            if (IsObfuscated(record))
+            {
+                var storedFolder = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
+                Directory.Move(storedFolder, targetFolder);
+                user.Files.RemoveAll(file => file.Id == record.Id);
+                SaveUser(user);
+                return targetFolder;
+            }
+
             var tempFolder = DecryptFolderToTemp(user, record);
             try
             {
@@ -445,6 +527,14 @@ public sealed class VaultStore
         }
 
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
+        if (IsObfuscated(record))
+        {
+            File.Move(encryptedPath, targetPath);
+            user.Files.RemoveAll(file => file.Id == record.Id);
+            SaveUser(user);
+            return targetPath;
+        }
+
         CryptoService.DecryptFileToPath(user.UnlockedKey, record, encryptedPath, targetPath);
         File.SetLastWriteTimeUtc(targetPath, metadata.OriginalLastWriteTime.UtcDateTime);
         DeleteFile(user, record);
@@ -498,6 +588,21 @@ public sealed class VaultStore
         var zipPath = Path.Combine(Path.GetDirectoryName(folderPath)!, $"{Guid.NewGuid():N}.zip");
         try
         {
+            var existingMetadata = ReadMetadata(user, record);
+            if (IsObfuscated(record))
+            {
+                TrySaveObfuscatedFolderBack(user, record, folderPath, sessionKey, new FileMetadata
+                {
+                    OriginalName = new DirectoryInfo(folderPath).Name,
+                    OriginalExtension = "",
+                    OriginalRelativeDirectory = existingMetadata.OriginalRelativeDirectory,
+                    OriginalLength = GetDirectorySize(folderPath),
+                    OriginalLastWriteTime = new DateTimeOffset(DateTime.SpecifyKind(Directory.GetLastWriteTimeUtc(folderPath), DateTimeKind.Utc)),
+                    IsFolder = true
+                });
+                return;
+            }
+
             if (File.Exists(zipPath))
             {
                 File.Delete(zipPath);
@@ -508,6 +613,7 @@ public sealed class VaultStore
             {
                 OriginalName = new DirectoryInfo(folderPath).Name,
                 OriginalExtension = ".zip",
+                OriginalRelativeDirectory = existingMetadata.OriginalRelativeDirectory,
                 OriginalLength = GetDirectorySize(folderPath),
                 OriginalLastWriteTime = new DateTimeOffset(DateTime.SpecifyKind(Directory.GetLastWriteTimeUtc(folderPath), DateTimeKind.Utc)),
                 IsFolder = true
@@ -528,10 +634,26 @@ public sealed class VaultStore
             return;
         }
 
+        var existingMetadata = ReadMetadata(user, record);
+        if (IsObfuscated(record))
+        {
+            TrySaveObfuscatedFileBack(user, record, path, key, new FileMetadata
+            {
+                OriginalName = Path.GetFileName(path),
+                OriginalExtension = Path.GetExtension(path),
+                OriginalRelativeDirectory = existingMetadata.OriginalRelativeDirectory,
+                OriginalLength = new FileInfo(path).Length,
+                OriginalLastWriteTime = new DateTimeOffset(DateTime.SpecifyKind(File.GetLastWriteTimeUtc(path), DateTimeKind.Utc)),
+                IsFolder = false
+            });
+            return;
+        }
+
         TrySavePackageBack(user, record, path, key, new FileMetadata
         {
             OriginalName = Path.GetFileName(path),
             OriginalExtension = Path.GetExtension(path),
+            OriginalRelativeDirectory = existingMetadata.OriginalRelativeDirectory,
             OriginalLength = new FileInfo(path).Length,
             OriginalLastWriteTime = new DateTimeOffset(DateTime.SpecifyKind(File.GetLastWriteTimeUtc(path), DateTimeKind.Utc)),
             IsFolder = false
@@ -540,6 +662,12 @@ public sealed class VaultStore
 
     private void TrySavePackageBack(UserRecord user, FileRecord record, string packagePath, byte[] key, FileMetadata metadata)
     {
+        if (IsObfuscated(record))
+        {
+            TrySaveObfuscatedFolderBack(user, record, packagePath, key, metadata);
+            return;
+        }
+
         var encryptedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
         var attempts = 0;
         while (true)
@@ -568,6 +696,53 @@ public sealed class VaultStore
         }
     }
 
+    private void TrySaveObfuscatedFileBack(UserRecord user, FileRecord record, string path, byte[] key, FileMetadata metadata)
+    {
+        var storedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
+        var attempts = 0;
+        while (true)
+        {
+            try
+            {
+                File.Copy(path, storedPath, true);
+                record.CipherLength = new FileInfo(storedPath).Length;
+                var metadataBlob = CryptoService.EncryptJson(key, metadata, CryptoService.Utf8(record.Id));
+                record.MetadataNonce = metadataBlob.Nonce;
+                record.MetadataTag = metadataBlob.Tag;
+                record.MetadataCiphertext = metadataBlob.Ciphertext;
+                SaveUser(user);
+                return;
+            }
+            catch (IOException) when (++attempts < 10)
+            {
+                Thread.Sleep(500);
+            }
+            catch (UnauthorizedAccessException) when (++attempts < 10)
+            {
+                Thread.Sleep(500);
+            }
+        }
+    }
+
+    private void TrySaveObfuscatedFolderBack(UserRecord user, FileRecord record, string folderPath, byte[] key, FileMetadata metadata)
+    {
+        var storedPath = Path.Combine(GetUserFilesRoot(user.Id), record.StoredName);
+        var replacementPath = Path.Combine(GetUserFilesRoot(user.Id), $"{Guid.NewGuid():N}.box");
+        CopyDirectory(folderPath, replacementPath);
+        if (Directory.Exists(storedPath))
+        {
+            ShredDirectory(storedPath);
+        }
+
+        Directory.Move(replacementPath, storedPath);
+        record.CipherLength = GetDirectorySize(storedPath);
+        var metadataBlob = CryptoService.EncryptJson(key, metadata, CryptoService.Utf8(record.Id));
+        record.MetadataNonce = metadataBlob.Nonce;
+        record.MetadataTag = metadataBlob.Tag;
+        record.MetadataCiphertext = metadataBlob.Ciphertext;
+        SaveUser(user);
+    }
+
     public void SaveUser(UserRecord user)
     {
         var path = GetUserPath(user.Id);
@@ -585,6 +760,11 @@ public sealed class VaultStore
     }
 
     private string GetUserPath(string userId) => Path.Combine(GetUserRoot(userId), "user.json");
+
+    private static bool IsObfuscated(FileRecord record)
+    {
+        return string.Equals(record.StorageMode, FileStorageModes.Obfuscated, StringComparison.OrdinalIgnoreCase);
+    }
 
     private string GetRelativeDirectory(string path)
     {
@@ -622,6 +802,22 @@ public sealed class VaultStore
     {
         return Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
             .Sum(file => new FileInfo(file).Length);
+    }
+
+    private static void CopyDirectory(string sourcePath, string destinationPath)
+    {
+        Directory.CreateDirectory(destinationPath);
+        foreach (var directory in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(Path.Combine(destinationPath, Path.GetRelativePath(sourcePath, directory)));
+        }
+
+        foreach (var file in Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            var destinationFile = Path.Combine(destinationPath, Path.GetRelativePath(sourcePath, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationFile)!);
+            File.Copy(file, destinationFile, true);
+        }
     }
 
     private static void TryDelete(string path)

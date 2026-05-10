@@ -194,6 +194,7 @@
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="Dosya" DisplayMemberBinding="{Binding Name}" Width="390"/>
+                                    <GridViewColumn Header="Mod" DisplayMemberBinding="{Binding ModeText}" Width="90"/>
                                     <GridViewColumn Header="Boyut" DisplayMemberBinding="{Binding SizeText}" Width="120"/>
                                     <GridViewColumn Header="Eklenme" DisplayMemberBinding="{Binding AddedText}" Width="180"/>
                                 </GridView>
